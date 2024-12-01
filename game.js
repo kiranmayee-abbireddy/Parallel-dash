@@ -12,6 +12,11 @@ class Character {
         this.isClimbing = false;
         this.climbSpeed = 4;
         this.createCharacter();
+        
+        // Apply current skin immediately after creation
+        if (window.game && window.game.currentSkin) {
+            this.applySkin(window.game.currentSkin);
+        }
         this.doubleJumpAvailable = true;
         this.lastJumpTime = 0;
         this.jumpCount = 0;
@@ -29,6 +34,13 @@ class Character {
         this.element.className = `character ${this.side}`;
         this.element.id = `${this.side}Character`;
         this.updatePosition();
+        
+        // Add accessory if one is equipped
+        if (window.game && window.game.currentAccessory) {
+            const accessory = document.createElement('div');
+            accessory.className = `accessory ${window.game.currentAccessory} ${this.side}`;
+            this.element.appendChild(accessory);
+        }
         
         const section = document.getElementById(`${this.side}Section`);
         section.appendChild(this.element);
@@ -202,6 +214,22 @@ class Character {
         this.isJumping = true;
         this.velocityY = 0;
     }
+
+    applySkin(skinName) {
+        // Remove any existing skin classes
+        const skinClasses = this.element.className
+            .split(' ')
+            .filter(cls => !cls.endsWith('-skin'));
+        
+        // Create new class list
+        let newClassList = skinClasses;
+        
+        // Add the skin class (even for default skin)
+        newClassList.push(`${skinName}-skin`);
+        
+        // Update element's class list
+        this.element.className = newClassList.join(' ');
+    }
 }
 
 class LevelGenerator {
@@ -320,6 +348,21 @@ class LevelGenerator {
 
 class Game {
     constructor() {
+        // Initialize arrays first
+        this.purchasedSkins = JSON.parse(localStorage.getItem('purchasedSkins')) || ['default-skin']; // Only default skin free
+        this.purchasedAccessories = JSON.parse(localStorage.getItem('purchasedAccessories')) || ['none'];
+        
+        // Initialize current items
+        this.currentSkin = localStorage.getItem('currentSkin') || 'default-skin';
+        this.currentAccessory = localStorage.getItem('currentAccessory') || 'none';
+        
+        // Cache DOM elements
+        this.gameContainer = document.querySelector('.game-container');
+        this.introScreen = document.getElementById('introScreen');
+        this.gameOverScreen = document.getElementById('gameOverScreen');
+        this.levelCompleteScreen = document.getElementById('levelCompleteScreen');
+        this.storeTotalCoins = document.getElementById('storeTotalCoins');
+
         // Load saved progress
         const savedProgress = JSON.parse(localStorage.getItem('gameProgress')) || {
             currentLevel: 1,
@@ -327,6 +370,7 @@ class Game {
             highestLevel: 1
         };
 
+        // Initialize game state
         this.currentLevel = savedProgress.currentLevel;
         this.totalCoins = savedProgress.totalCoins;
         this.coins = 0;
@@ -334,7 +378,7 @@ class Game {
         this.characterA = null;
         this.characterB = null;
         this.isRunning = false;
-        this.maxLevel = Infinity; // Allow unlimited levels
+        this.maxLevel = Infinity;
         this.keys = {
             left: false,
             right: false,
@@ -342,23 +386,48 @@ class Game {
             up: false,
             down: false
         };
-        this.levels = []; // Initialize empty levels array
+        this.levels = [];
         this.levelGenerator = new LevelGenerator();
         
-        this.init(); // Initialize characters first
-        this.generateAndLoadLevel(this.currentLevel); // Generate and load first level
+        // Add nickname property
+        this.playerNickname = localStorage.getItem('playerNickname');
+        
+        // Initialize game
+        this.init();
+        this.generateAndLoadLevel(this.currentLevel);
         this.setupIntroScreen();
         this.pause();
         this.characterAAtPortal = false;
         this.characterBAtPortal = false;
+        
+        // Make sure all characters have skins
+        this.updateCharacterSkins(this.currentSkin);
+        
+        // Setup store after everything is initialized
+        this.setupStore();
+        
+        // Check nickname last
+        if (!this.playerNickname) {
+            this.showNicknamePrompt();
+        }
     }
 
     init() {
-        // Create characters with mirrored starting positions
+        // Create characters
         this.characterA = new Character('left', 20, 20);
         const rightSection = document.getElementById('rightSection');
         const rightStartX = rightSection.offsetWidth - 60;
         this.characterB = new Character('right', rightStartX, 20);
+        
+        // Apply current skin to new characters
+        if (this.currentSkin && this.currentSkin !== 'default-skin') {
+            this.characterA.element.classList.add(this.currentSkin);
+            this.characterB.element.classList.add(this.currentSkin);
+        } else {
+            // Always ensure default skin is applied if no other skin is set
+            this.characterA.element.classList.add('default-skin');
+            this.characterB.element.classList.add('default-skin');
+        }
         
         // Set up controls
         this.setupControls();
@@ -368,18 +437,105 @@ class Game {
         const introScreen = document.getElementById('introScreen');
         const startButton = document.getElementById('startButton');
         
-        // Show current progress
-        const progressDisplay = document.createElement('div');
-        progressDisplay.className = 'progress-display';
-        progressDisplay.innerHTML = `
-            Current Level: ${this.currentLevel}<br>
-            Total Coins: ${this.totalCoins}<br>
-            Highest Level: ${this.getHighestLevel()}
-        `;
-        introScreen.querySelector('.intro-content').insertBefore(
-            progressDisplay, 
-            startButton
-        );
+        // Get the demo characters
+        const leftDemo = introScreen.querySelector('.demo-character.left');
+        const rightDemo = introScreen.querySelector('.demo-character.right');
+
+        // First remove any existing skin classes
+        const allSkins = [
+            'default-skin', 'basic-blue-red-skin', 'basic-purple-orange-skin', 
+            'basic-green-pink-skin', 'neon-skin', 'galaxy-skin', 'rainbow-skin', 
+            'plasma-skin', 'crystal-skin', 'geometric-prism-skin',
+            'celestial-skin', 'fruity-skin', 'twilight-dawn-skin',
+            'emerald-ruby-skin', 'arctic-tropical-skin', 'mercury-skin',
+            'holographic-skin', 'crystal-facets-skin'
+        ];
+
+        // Function to apply skin while preserving other classes
+        const applySkin = (element, isRight = false) => {
+            if (element) {
+                // Keep all classes except skin classes
+                const baseClasses = element.className
+                    .split(' ')
+                    .filter(cls => !cls.endsWith('-skin'));
+                
+                // Add position class if missing
+                if (!baseClasses.includes(isRight ? 'right' : 'left')) {
+                    baseClasses.push(isRight ? 'right' : 'left');
+                }
+                
+                // Add skin from purchased list or default
+                const skinToApply = this.purchasedSkins.includes(this.currentSkin) ? 
+                    this.currentSkin : 
+                    this.purchasedSkins[0]; // First purchased skin (should be default-skin)
+                
+                baseClasses.push(skinToApply);
+                
+                // Apply classes
+                element.className = baseClasses.join(' ');
+            }
+        };
+
+        // Apply current skin to demo characters
+        applySkin(leftDemo);
+        applySkin(rightDemo, true);
+
+        // Apply accessories to demo characters
+        if (this.currentAccessory) {
+            [leftDemo, rightDemo].forEach(char => {
+                if (char) {
+                    const accessory = document.createElement('div');
+                    accessory.className = `accessory ${this.currentAccessory} ${char.classList.contains('right') ? 'right' : 'left'}`;
+                    char.appendChild(accessory);
+                }
+            });
+        }
+
+        // Update demo characters when skin changes
+        this.updateCharacterSkins = (newSkin) => {
+            // Only update if the skin is in purchased list
+            if (this.purchasedSkins.includes(newSkin)) {
+                this.currentSkin = newSkin;
+                
+                // Update all character instances
+                const allCharacters = [
+                    ...document.querySelectorAll('.demo-character'),
+                    ...document.querySelectorAll('.game-over-character-left, .game-over-character-right'),
+                    ...document.querySelectorAll('.completion-animation .character-left, .completion-animation .character-right'),
+                    this.characterA?.element,
+                    this.characterB?.element
+                ];
+
+                allCharacters.forEach(char => {
+                    if (char) {
+                        // Keep position and base classes
+                        const baseClasses = char.className
+                            .split(' ')
+                            .filter(cls => !cls.endsWith('-skin') && cls !== 'at-portal');
+                        
+                        // Add new skin class
+                        char.className = [...baseClasses, newSkin].join(' ');
+
+                        // Special handling for demo characters to ensure animations persist
+                        if (char.classList.contains('demo-character')) {
+                            if (char.classList.contains('left')) {
+                                char.style.animation = 'demoMoveLeft 4s infinite';
+                            } else if (char.classList.contains('right')) {
+                                char.style.animation = 'demoMoveRight 4s infinite';
+                            }
+                        }
+                    }
+                });
+
+                // Save current skin
+                localStorage.setItem('currentSkin', newSkin);
+                
+                // Update store buttons
+                this.updateStoreButtons();
+            }
+        };
+
+        this.updateMenuProgress();
 
         startButton.addEventListener('click', () => {
             introScreen.style.opacity = '0';
@@ -391,7 +547,51 @@ class Game {
         });
     }
 
+    updateMenuProgress() {
+        // Remove existing progress display if any
+        const existingProgress = document.querySelector('.progress-display');
+        if (existingProgress) {
+            existingProgress.remove();
+        }
+
+        // Create new progress display with just current level and total coins
+        const progressDisplay = document.createElement('div');
+        progressDisplay.className = 'progress-display';
+        progressDisplay.innerHTML = `
+            Current Level: ${this.currentLevel}<br>
+            Total Coins: ${this.totalCoins}
+        `;
+
+        // Insert before start button
+        const introScreen = document.getElementById('introScreen');
+        const startButton = document.getElementById('startButton');
+        introScreen.querySelector('.intro-content').insertBefore(
+            progressDisplay, 
+            startButton
+        );
+    }
+
     showGameOver() {
+        const leftChar = document.querySelector('.game-over-character-left');
+        const rightChar = document.querySelector('.game-over-character-right');
+        
+        if (leftChar && rightChar) {
+            // Apply current skin
+            leftChar.className = `game-over-character-left ${this.currentSkin || 'default-skin'}`;
+            rightChar.className = `game-over-character-right ${this.currentSkin || 'default-skin'}`;
+            
+            // Apply current accessory
+            if (this.currentAccessory) {
+                const leftAccessory = document.createElement('div');
+                leftAccessory.className = `accessory ${this.currentAccessory} left`;
+                leftChar.appendChild(leftAccessory);
+
+                const rightAccessory = document.createElement('div');
+                rightAccessory.className = `accessory ${this.currentAccessory} right`;
+                rightChar.appendChild(rightAccessory);
+            }
+        }
+
         document.getElementById('gameOverScreen').style.display = 'flex';
     }
 
@@ -401,8 +601,7 @@ class Game {
         document.getElementById('levelStats').innerHTML = `
             Level ${this.currentLevel} Complete!<br>
             Time: ${timeTaken.toFixed(1)}s<br>
-            Coins: ${this.coins}<br>
-            High Score: Level ${this.getHighestLevel()}
+            Coins: ${this.coins}
         `;
     }
 
@@ -496,9 +695,71 @@ class Game {
 
         const homeButton = document.getElementById('homeButton');
         homeButton.addEventListener('click', () => {
-            if (confirm('Return to main menu? Your progress will be saved.')) {
-                this.returnToMenu();
-            }
+            const confirmModal = document.getElementById('confirmModal');
+            confirmModal.style.display = 'block';
+
+            document.getElementById('confirmYes').onclick = () => {
+                // Hide modal first
+                confirmModal.style.display = 'none';
+                
+                // Pause game
+                this.pause();
+                
+                // Get references to screens
+                const gameContainer = document.querySelector('.game-container');
+                const introScreen = document.getElementById('introScreen');
+                const demoContainer = document.querySelector('.demo-container');
+                
+                // Hide all game screens immediately
+                document.getElementById('gameOverScreen').style.display = 'none';
+                document.getElementById('levelCompleteScreen').style.display = 'none';
+                
+                // Show intro screen and demo container
+                introScreen.style.display = 'block';
+                demoContainer.style.display = 'flex';
+                introScreen.style.opacity = '0';
+                
+                // Quick fade transition
+                gameContainer.style.opacity = '0';
+                
+                // Single quick transition
+                setTimeout(() => {
+                    // Hide game container
+                    gameContainer.style.display = 'none';
+                    
+                    // Show intro screen with animation
+                    introScreen.style.opacity = '1';
+                    
+                    // Make sure demo characters have current skin
+                    const leftDemo = document.querySelector('.demo-character.left');
+                    const rightDemo = document.querySelector('.demo-character.right');
+                    if (leftDemo && rightDemo) {
+                        [leftDemo, rightDemo].forEach(char => {
+                            // Remove any existing skin classes
+                            char.className = char.className
+                                .split(' ')
+                                .filter(cls => !cls.endsWith('-skin'))
+                                .join(' ');
+                            
+                            // Add current skin
+                            if (this.currentSkin !== 'default') {
+                                char.classList.add(this.currentSkin);
+                            }
+                        });
+                    }
+                    
+                    // Update menu
+                    this.updateMenuProgress();
+                    
+                    // Reset game container state
+                    gameContainer.style.opacity = '1';
+                    gameContainer.style.display = 'flex';
+                }, 100);
+            };
+
+            document.getElementById('confirmNo').onclick = () => {
+                confirmModal.style.display = 'none';
+            };
         });
 
         // Game Over screen controls
@@ -603,6 +864,12 @@ class Game {
         this.characterB.isJumping = false;
         this.characterB.updatePosition();
 
+        // Reapply current skin to characters
+        if (this.currentSkin && this.currentSkin !== 'default-skin') {
+            this.characterA.element.classList.add(this.currentSkin);
+            this.characterB.element.classList.add(this.currentSkin);
+        }
+
         // Resume game
         if (!this.isRunning) {
             this.start();
@@ -614,7 +881,10 @@ class Game {
         // Reset only current level state, keep total progress
         this.coins = 0;
         this.collectedCoins.clear();
-        document.getElementById('coinCount').textContent = `0 (Total: ${this.totalCoins})`;
+        
+        // Update both displays separately
+        document.getElementById('coinCount').textContent = this.coins;
+        document.getElementById('totalCoins').textContent = this.totalCoins;
         
         // Hide game over screen
         document.getElementById('gameOverScreen').style.display = 'none';
@@ -627,11 +897,46 @@ class Game {
     }
 
     returnToMenu() {
+        // Pause the game first
+        this.pause();
+        
+        // Save current progress
+        this.saveProgress();
+        
+        // Get references to screens
+        const gameContainer = document.querySelector('.game-container');
+        const introScreen = document.getElementById('introScreen');
+        
+        // Hide game screens
         document.getElementById('gameOverScreen').style.display = 'none';
-        document.getElementById('introScreen').style.display = 'block';
-        document.getElementById('introScreen').style.opacity = '1';
-        // Don't reset level number
-        this.reset();
+        document.getElementById('levelCompleteScreen').style.display = 'none';
+        
+        // Fade out game container
+        gameContainer.style.opacity = '0';
+        
+        setTimeout(() => {
+            // Hide game container
+            gameContainer.style.display = 'none';
+            
+            // Show and fade in intro screen
+            introScreen.style.display = 'block';
+            introScreen.style.opacity = '1';
+            
+            // Update menu progress
+            this.updateMenuProgress();
+            
+            // Reset game container opacity for next time
+            gameContainer.style.opacity = '1';
+            
+            // Clear level without restarting
+            this.clearLevel();
+            this.collectedCoins.clear();
+            this.coins = 0;
+            
+            // Update displays
+            document.getElementById('coinCount').textContent = this.coins;
+            document.getElementById('totalCoins').textContent = this.totalCoins;
+        }, 200);
     }
 
     generateAndLoadLevel(levelNum) {
@@ -753,7 +1058,11 @@ class Game {
             coinElement.remove();
             this.coins++;
             this.totalCoins++; // Update total coins
-            document.getElementById('coinCount').textContent = `${this.coins} (Total: ${this.totalCoins})`;
+            
+            // Update both displays separately
+            document.getElementById('coinCount').textContent = this.coins;
+            document.getElementById('totalCoins').textContent = this.totalCoins;
+            
             this.saveProgress(); // Save after collecting coin
             this.checkLevelCompletion();
         }
@@ -768,20 +1077,88 @@ class Game {
     }
 
     handleLevelComplete() {
-        const level = this.levels[this.currentLevel - 1];
-        if (!level) return;
-
-        // Only complete if both characters are at portals AND have enough coins
         if (this.characterAAtPortal && this.characterBAtPortal) {
             this.pause();
-            const timeTaken = (Date.now() - this.levelStartTime) / 1000;
+            
+            // Update level number and stats
+            document.getElementById('completedLevel').textContent = this.currentLevel;
             document.getElementById('levelStats').innerHTML = `
-                Level ${this.currentLevel} Complete!<br>
-                Time: ${timeTaken.toFixed(1)}s<br>
-                Coins: ${this.coins}/${level.requiredCoins}
+                Time: ${((Date.now() - this.levelStartTime) / 1000).toFixed(1)}s<br>
+                Coins: ${this.coins}
             `;
+
+            const leftChar = document.querySelector('.completion-animation .character-left');
+            const rightChar = document.querySelector('.completion-animation .character-right');
+            
+            if (leftChar && rightChar) {
+                // Apply current skin
+                leftChar.className = `character-left ${this.currentSkin || 'default-skin'}`;
+                rightChar.className = `character-right ${this.currentSkin || 'default-skin'}`;
+                
+                // Apply current accessory
+                if (this.currentAccessory) {
+                    const leftAccessory = document.createElement('div');
+                    leftAccessory.className = `accessory ${this.currentAccessory} left`;
+                    leftChar.appendChild(leftAccessory);
+
+                    const rightAccessory = document.createElement('div');
+                    rightAccessory.className = `accessory ${this.currentAccessory} right`;
+                    rightChar.appendChild(rightAccessory);
+                }
+            }
+
             document.getElementById('levelCompleteScreen').style.display = 'flex';
+            setTimeout(() => this.createHearts(), 500);
         }
+    }
+
+    createHearts() {
+        const container = document.querySelector('.hearts-container');
+        const centerX = container.offsetWidth / 2;
+        const centerY = container.offsetHeight / 2;
+        
+        // Create continuous hearts animation
+        const createHeart = () => {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            
+            // Start from the center where characters meet
+            const startX = centerX + (Math.random() - 0.5) * 40; // Small random horizontal offset
+            const startY = centerY;
+            
+            // Simple upward movement with slight side-to-side variation
+            const spreadX = (Math.random() - 0.5) * 30;
+            const floatHeight = -150 - Math.random() * 50; // Random float height
+            
+            heart.style.left = `${startX}px`;
+            heart.style.top = `${startY}px`;
+            heart.style.setProperty('--tx', spreadX);
+            heart.style.setProperty('--ty', floatHeight);
+            
+            container.appendChild(heart);
+            
+            // Slower animation for more floating effect
+            heart.style.animation = 'floatHeart 3s ease-out forwards';
+            
+            // Remove heart after animation
+            heart.addEventListener('animationend', () => {
+                heart.remove();
+            });
+        };
+
+        // Create hearts continuously
+        const heartInterval = setInterval(() => {
+            createHeart();
+        }, 200); // Create heart every 200ms
+
+        // Store interval ID to clear it later
+        this.heartAnimationInterval = heartInterval;
+
+        // Add event listener to next level button to stop hearts
+        const nextLevelButton = document.querySelector('.next-level-button');
+        nextLevelButton.addEventListener('click', () => {
+            clearInterval(this.heartAnimationInterval);
+        });
     }
 
     checkPortalCollision(character, portal) {
@@ -809,16 +1186,345 @@ class Game {
     }
 
     updateLevelDisplay() {
-        document.getElementById('levelDisplay').textContent = `Level ${this.currentLevel}`;
+        const levelDisplay = document.getElementById('levelDisplay');
+        levelDisplay.textContent = `${this.playerNickname} - Level ${this.currentLevel}`;
     }
 
     saveProgress() {
         const progress = {
             currentLevel: this.currentLevel,
             totalCoins: this.totalCoins,
-            highestLevel: Math.max(this.currentLevel, this.getHighestLevel())
+            highestLevel: this.highestLevel,
+            purchasedSkins: this.purchasedSkins,
+            currentSkin: this.currentSkin
         };
         localStorage.setItem('gameProgress', JSON.stringify(progress));
+    }
+
+    showNicknamePrompt() {
+        const nicknamePrompt = document.getElementById('nicknamePrompt');
+        const startButton = document.getElementById('startButton');
+        const confirmButton = document.getElementById('confirmNickname');
+        const nicknameInput = document.getElementById('nicknameInput');
+        
+        // Hide start button and show prompt
+        startButton.style.display = 'none';
+        nicknamePrompt.style.display = 'block';
+        
+        confirmButton.addEventListener('click', () => {
+            const nickname = nicknameInput.value.trim();
+            if (nickname) {
+                this.playerNickname = nickname;
+                localStorage.setItem('playerNickname', nickname);
+                nicknamePrompt.style.display = 'none';
+                startButton.style.display = 'block';
+                
+                // Update UI with nickname
+                this.updateNicknameDisplay();
+            }
+        });
+        
+        // Allow Enter key to confirm
+        nicknameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                confirmButton.click();
+            }
+        });
+    }
+
+    updateNicknameDisplay() {
+        // Update nickname in game UI
+        const levelDisplay = document.getElementById('levelDisplay');
+        levelDisplay.textContent = `${this.playerNickname} - Level ${this.currentLevel}`;
+    }
+
+    setupStore() {
+        // Initial setup of store buttons
+        document.querySelectorAll('.store-item button').forEach(button => {
+            const itemId = button.dataset.item;
+            const price = button.dataset.price;
+            const category = button.closest('.store-item')?.dataset.category || 'skins';
+            
+            // Set initial button state
+            if (category === 'accessories') {
+                if (this.purchasedAccessories.includes(itemId)) {
+                    if (this.currentAccessory === itemId) {
+                        button.textContent = 'Equipped';
+                        button.classList.add('equipped');
+                    } else {
+                        button.textContent = 'Equip';
+                        button.classList.remove('equipped');
+                    }
+                } else {
+                    button.textContent = `${price} 🪙`;
+                    button.classList.remove('equipped');
+                }
+            } else {
+                // Handle skins
+                if (this.purchasedSkins.includes(itemId)) {
+                    if (this.currentSkin === itemId) {
+                        button.textContent = 'Equipped';
+                        button.classList.add('equipped');
+                    } else {
+                        button.textContent = 'Equip';
+                        button.classList.remove('equipped');
+                    }
+                } else {
+                    button.textContent = `${price} 🪙`;
+                    button.classList.remove('equipped');
+                }
+            }
+            
+            // Add click handler
+            button.addEventListener('click', () => {
+                this.handlePurchase(button);
+            });
+        });
+    }
+
+    handlePurchase(button) {
+        const itemId = button.dataset.item;
+        const price = parseInt(button.dataset.price);
+        const category = button.closest('.store-item')?.dataset.category || 'skins';
+        
+        if (category === 'accessories') {
+            if (this.purchasedAccessories.includes(itemId)) {
+                // If already purchased, handle equipping
+                if (this.currentAccessory !== itemId) {
+                    this.equipAccessory(itemId);
+                    button.textContent = 'Equipped';
+                    button.classList.add('equipped');
+                }
+            } else if (this.totalCoins >= price) {
+                // Purchase the accessory
+                this.totalCoins -= price;
+                this.purchasedAccessories.push(itemId);
+                
+                // Save to localStorage
+                localStorage.setItem('purchasedAccessories', JSON.stringify(this.purchasedAccessories));
+                localStorage.setItem('totalCoins', this.totalCoins);
+                
+                // Equip the accessory
+                this.equipAccessory(itemId);
+                button.textContent = 'Equipped';
+                button.classList.add('equipped');
+                
+                // Update coins display
+                if (this.storeTotalCoins) {
+                    this.storeTotalCoins.textContent = this.totalCoins;
+                }
+            } else {
+                this.showNotification('Not enough coins!');
+            }
+        } else {
+            // Handle skins
+            if (this.purchasedSkins.includes(itemId)) {
+                if (this.currentSkin !== itemId) {
+                    this.applySkin(itemId);
+                    button.textContent = 'Equipped';
+                    button.classList.add('equipped');
+                }
+            } else if (this.totalCoins >= price) {
+                this.totalCoins -= price;
+                this.purchasedSkins.push(itemId);
+                
+                localStorage.setItem('purchasedSkins', JSON.stringify(this.purchasedSkins));
+                localStorage.setItem('totalCoins', this.totalCoins);
+                
+                this.applySkin(itemId);
+                button.textContent = 'Equipped';
+                button.classList.add('equipped');
+                
+                if (this.storeTotalCoins) {
+                    this.storeTotalCoins.textContent = this.totalCoins;
+                }
+            } else {
+                this.showNotification('Not enough coins!');
+            }
+        }
+    }
+
+    updateStoreButtons() {
+        document.querySelectorAll('.store-item button').forEach(button => {
+            const itemId = button.dataset.item;
+            const price = button.dataset.price;
+            const category = button.closest('.store-item')?.dataset.category || 'skins';
+            
+            if (category === 'accessories') {
+                if (this.purchasedAccessories.includes(itemId)) {
+                    if (this.currentAccessory === itemId) {
+                        button.textContent = 'Equipped';
+                        button.classList.add('equipped');
+                    } else {
+                        button.textContent = 'Equip';
+                        button.classList.remove('equipped');
+                    }
+                } else {
+                    button.textContent = `${price} 🪙`;
+                    button.classList.remove('equipped');
+                }
+            } else {
+                // Handle skins
+                if (this.purchasedSkins.includes(itemId)) {
+                    if (this.currentSkin === itemId) {
+                        button.textContent = 'Equipped';
+                        button.classList.add('equipped');
+                    } else {
+                        button.textContent = 'Equip';
+                        button.classList.remove('equipped');
+                    }
+                } else {
+                    button.textContent = `${price} 🪙`;
+                    button.classList.remove('equipped');
+                }
+            }
+        });
+    }
+
+    applySkin(skinName) {
+        // Apply skin to all characters
+        this.currentSkin = skinName;
+        localStorage.setItem('currentSkin', skinName);
+        
+        // Update all character instances
+        this.updateCharacterSkins(skinName);
+        
+        // Update store buttons
+        this.updateStoreButtons();
+    }
+
+    updateCharacterSkins(newSkin) {
+        this.currentSkin = newSkin;
+
+        // Get all character instances including animation characters
+        const allCharacters = [
+            // Demo characters
+            ...document.querySelectorAll('.demo-character'),
+            
+            // Game over screen characters
+            ...document.querySelectorAll('.game-over-character-left, .game-over-character-right'),
+            
+            // Level complete animation characters
+            ...document.querySelectorAll('.completion-animation .character-left, .completion-animation .character-right'),
+            
+            // Active game characters
+            this.characterA?.element,
+            this.characterB?.element
+        ];
+
+        // Update each character's skin
+        allCharacters.forEach(char => {
+            if (char) {
+                // Keep position and base classes
+                const baseClasses = char.className
+                    .split(' ')
+                    .filter(cls => !cls.endsWith('-skin') && cls !== 'at-portal');
+                
+                // Add new skin class
+                char.className = [...baseClasses, `${newSkin}`].join(' ');
+
+                // Special handling for demo characters to ensure animations persist
+                if (char.classList.contains('demo-character')) {
+                    if (char.classList.contains('left')) {
+                        char.style.animation = 'demoMoveLeft 4s infinite';
+                    } else if (char.classList.contains('right')) {
+                        char.style.animation = 'demoMoveRight 4s infinite';
+                    }
+                }
+            }
+        });
+
+        // Save current skin
+        localStorage.setItem('currentSkin', newSkin);
+        
+        // Update store buttons
+        this.updateStoreButtons();
+    }
+
+    // Add method to apply accessory to a character
+    applyAccessoryToCharacter(character, isRight) {
+        if (!character) return;
+        
+        // Remove any existing accessories
+        const existingAccessory = character.querySelector('.accessory');
+        if (existingAccessory) {
+            existingAccessory.remove();
+        }
+
+        // If there's a current accessory, add it with gender-specific class
+        if (this.currentAccessory) {
+            const accessory = document.createElement('div');
+            accessory.className = `accessory ${this.currentAccessory} ${isRight ? 'right' : 'left'}`;
+            character.appendChild(accessory);
+        }
+    }
+
+    // Add method to equip accessory
+    equipAccessory(accessoryId) {
+        this.currentAccessory = accessoryId;
+        localStorage.setItem('currentAccessory', accessoryId);
+        
+        // Apply to all character instances
+        const allCharacters = [
+            ...document.querySelectorAll('.demo-character'),
+            ...document.querySelectorAll('.game-over-character-left, .game-over-character-right'),
+            ...document.querySelectorAll('.completion-animation .character-left, .completion-animation .character-right'),
+            this.characterA?.element,
+            this.characterB?.element
+        ];
+
+        allCharacters.forEach(char => {
+            if (char) {
+                // Remove existing accessory if any
+                const existingAccessory = char.querySelector('.accessory');
+                if (existingAccessory) {
+                    existingAccessory.remove();
+                }
+
+                // Add new accessory if not 'none'
+                if (accessoryId !== 'none') {
+                    const accessory = document.createElement('div');
+                    accessory.className = `accessory ${accessoryId} ${char.classList.contains('right') ? 'right' : 'left'}`;
+                    char.appendChild(accessory);
+                }
+            }
+        });
+        
+        // Update store buttons
+        this.updateStoreButtons();
+    }
+
+    // Add method to apply accessory when creating new characters
+    createCharacter(side, startX, startY) {
+        const character = document.createElement('div');
+        character.className = `character ${side} ${this.currentSkin || 'default-skin'}`;
+        character.style.left = `${startX}px`;
+        character.style.bottom = `${startY}px`;
+        
+        // Add current accessory if one is equipped
+        if (this.currentAccessory && this.currentAccessory !== 'none') {
+            const accessory = document.createElement('div');
+            accessory.className = `accessory ${this.currentAccessory} ${side}`;
+            character.appendChild(accessory);
+        }
+
+        return character;
+    }
+
+    // Update loadGame to restore accessories
+    loadGame() {
+        // ... existing load code ...
+        
+        // Restore accessories
+        const savedAccessory = localStorage.getItem('currentAccessory');
+        if (savedAccessory) {
+            this.currentAccessory = savedAccessory;
+            if (savedAccessory !== 'none') {
+                this.equipAccessory(savedAccessory);
+            }
+        }
+        
+        // ... rest of load code ...
     }
 }
 
@@ -880,9 +1586,310 @@ class Coin {
     }
 }
 
-// At the bottom of game.js, modify the initialization:
-let game; // Declare game variable in global scope
+class SpaceBackground {
+    constructor() {
+        // Create two canvases - one for intro and one for game
+        this.gameCanvas = document.getElementById('spaceBackground');
+        this.introCanvas = document.createElement('canvas');
+        this.introCanvas.id = 'introSpaceBackground';
+        
+        // Insert intro canvas into intro screen
+        const introScreen = document.getElementById('introScreen');
+        introScreen.insertBefore(this.introCanvas, introScreen.firstChild);
 
+        // Style intro canvas
+        this.introCanvas.style.position = 'absolute';
+        this.introCanvas.style.top = '0';
+        this.introCanvas.style.left = '0';
+        this.introCanvas.style.width = '100%';
+        this.introCanvas.style.height = '100%';
+        this.introCanvas.style.zIndex = '-1';
+
+        // Get contexts
+        this.gameCtx = this.gameCanvas.getContext('2d');
+        this.introCtx = this.introCanvas.getContext('2d');
+
+        // Shared state for consistent animation
+        this.stars = [];
+        this.planets = [];
+        this.nebulas = [];
+        this.shootingStars = [];
+        this.starClusters = [];
+        this.celestialObjects = [];
+        this.coloredNebulas = [];
+        
+        this.resize();
+        this.init();
+        
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    resize() {
+        // Resize both canvases
+        this.gameCanvas.width = window.innerWidth;
+        this.gameCanvas.height = window.innerHeight;
+        this.introCanvas.width = window.innerWidth;
+        this.introCanvas.height = window.innerHeight;
+    }
+
+    init() {
+        // Create colored nebulas (larger, more blurred)
+        const nebulaColors = [
+            ['#4facfe33', '#00f2fe22'],  // Blue
+            ['#ff475733', '#ff6b8122'],  // Red
+            ['#7d5fff33', '#7158e222'],  // Purple
+            ['#3ae37433', '#32ff7e22'],  // Green
+            ['#ffa50033', '#ffd70022'],  // Gold
+            ['#ff69b433', '#da70d622']   // Pink
+        ];
+
+        for (let i = 0; i < 4; i++) {
+            const colors = nebulaColors[Math.floor(Math.random() * nebulaColors.length)];
+            this.coloredNebulas.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                size: Math.random() * 400 + 300,
+                colors: colors,
+                rotation: Math.random() * Math.PI * 2,
+                speed: Math.random() * 0.0005,
+                blur: Math.random() * 50 + 30
+            });
+        }
+
+        // Create celestial objects (planets, moons, etc.)
+        const celestialTypes = [
+            { color: '#ff9999', size: 60, glow: '#ff000033' },  // Mars-like
+            { color: '#99ff99', size: 40, glow: '#00ff0033' },  // Alien world
+            { color: '#9999ff', size: 50, glow: '#0000ff33' },  // Ice planet
+            { color: '#ffff99', size: 45, glow: '#ffff0033' },  // Desert world
+            { color: '#ff99ff', size: 35, glow: '#ff00ff33' }   // Mystic world
+        ];
+
+        for (let i = 0; i < 3; i++) {
+            const type = celestialTypes[Math.floor(Math.random() * celestialTypes.length)];
+            this.celestialObjects.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                size: type.size * (0.5 + Math.random() * 0.5),
+                color: type.color,
+                glow: type.glow,
+                rotation: Math.random() * Math.PI * 2,
+                speed: Math.random() * 0.001,
+                orbitRadius: Math.random() * 100,
+                orbitSpeed: Math.random() * 0.001,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+
+        // Adjust shooting star parameters
+        this.shootingStarConfig = {
+            spawnRate: 0.005,  // Reduced spawn rate
+            minSpeed: 5,       // Slower minimum speed
+            maxSpeed: 8,       // Slower maximum speed
+            minLength: 50,     // Shorter trails
+            maxLength: 150,    // Longer maximum trails
+            colors: ['#fff', '#ffd700', '#4facfe', '#ff69b4'] // Multiple colors
+        };
+
+        // Regular stars
+        for (let i = 0; i < 200; i++) {
+            this.stars.push({
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                size: Math.random() * 2,
+                twinkleSpeed: Math.random() * 0.05 + 0.02,
+                twinklePhase: Math.random() * Math.PI * 2
+            });
+        }
+
+        this.animate();
+    }
+
+    drawBackground(ctx) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+        // Draw colored nebulas with blur
+        this.coloredNebulas.forEach(nebula => {
+            ctx.save();
+            ctx.filter = `blur(${nebula.blur}px)`;
+            const gradient = ctx.createRadialGradient(
+                nebula.x, nebula.y, 0,
+                nebula.x, nebula.y, nebula.size
+            );
+            gradient.addColorStop(0, nebula.colors[0]);
+            gradient.addColorStop(0.5, nebula.colors[1]);
+            gradient.addColorStop(1, 'transparent');
+
+            ctx.translate(nebula.x, nebula.y);
+            ctx.rotate(nebula.rotation);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(-nebula.size, -nebula.size, nebula.size * 2, nebula.size * 2);
+            ctx.restore();
+        });
+
+        // Draw celestial objects
+        this.celestialObjects.forEach(obj => {
+            ctx.save();
+            // Add glow effect
+            ctx.shadowColor = obj.glow;
+            ctx.shadowBlur = 20;
+            
+            // Calculate orbit position
+            const orbitX = obj.x + Math.cos(obj.phase) * obj.orbitRadius;
+            const orbitY = obj.y + Math.sin(obj.phase) * obj.orbitRadius;
+            
+            // Draw the object
+            ctx.translate(orbitX, orbitY);
+            ctx.rotate(obj.rotation);
+            
+            // Create gradient for 3D effect
+            const gradient = ctx.createRadialGradient(
+                0, 0, 0,
+                0, 0, obj.size
+            );
+            gradient.addColorStop(0, obj.color);
+            gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, obj.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+
+        // Draw shooting stars with color and glow
+        if (Math.random() < this.shootingStarConfig.spawnRate) {
+            const color = this.shootingStarConfig.colors[
+                Math.floor(Math.random() * this.shootingStarConfig.colors.length)
+            ];
+            this.shootingStars.push({
+                x: Math.random() * ctx.canvas.width,
+                y: 0,
+                length: this.shootingStarConfig.minLength + 
+                        Math.random() * (this.shootingStarConfig.maxLength - this.shootingStarConfig.minLength),
+                speed: this.shootingStarConfig.minSpeed + 
+                       Math.random() * (this.shootingStarConfig.maxSpeed - this.shootingStarConfig.minSpeed),
+                angle: Math.PI / 4 + Math.random() * Math.PI / 8,
+                color: color
+            });
+        }
+
+        // Draw and update shooting stars
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        this.shootingStars = this.shootingStars.filter(star => {
+            ctx.beginPath();
+            ctx.moveTo(star.x, star.y);
+            ctx.lineTo(star.x - Math.cos(star.angle) * star.length, 
+                      star.y - Math.sin(star.angle) * star.length);
+            ctx.stroke();
+
+            star.x += Math.cos(star.angle) * star.speed;
+            star.y += Math.sin(star.angle) * star.speed;
+
+            return star.y < ctx.canvas.height && star.x > 0;
+        });
+
+        // Update celestial objects
+        this.celestialObjects.forEach(obj => {
+            obj.rotation += obj.speed;
+            obj.phase += obj.orbitSpeed;
+        });
+
+        // Update colored nebulas
+        this.coloredNebulas.forEach(nebula => {
+            nebula.rotation += nebula.speed;
+        });
+
+        // Draw twinkling stars
+        this.stars.forEach(star => {
+            const twinkle = Math.sin(Date.now() * star.twinkleSpeed + star.twinklePhase) * 0.5 + 0.5;
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.5 + twinkle * 0.5})`;
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size * (0.8 + twinkle * 0.4), 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Randomly add shooting stars
+        if (Math.random() < 0.02) {
+            this.shootingStars.push({
+                x: Math.random() * ctx.canvas.width,
+                y: 0,
+                length: Math.random() * 100 + 50,
+                speed: Math.random() * 15 + 10,
+                angle: Math.PI / 4 + Math.random() * Math.PI / 8
+            });
+        }
+
+        // Draw and update shooting stars
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        this.shootingStars = this.shootingStars.filter(star => {
+            ctx.beginPath();
+            ctx.moveTo(star.x, star.y);
+            ctx.lineTo(star.x - Math.cos(star.angle) * star.length, 
+                      star.y - Math.sin(star.angle) * star.length);
+            ctx.stroke();
+
+            star.x += Math.cos(star.angle) * star.speed;
+            star.y += Math.sin(star.angle) * star.speed;
+
+            return star.y < ctx.canvas.height && star.x > 0;
+        });
+    }
+
+    animate() {
+        // Update nebulas
+        this.nebulas.forEach(nebula => {
+            nebula.rotation += nebula.speed;
+        });
+
+        // Update star clusters
+        this.starClusters.forEach(cluster => {
+            cluster.rotation += cluster.speed;
+        });
+
+        // Draw on both canvases
+        this.drawBackground(this.gameCtx);
+        this.drawBackground(this.introCtx);
+
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+// Initialize space background when game starts
 document.addEventListener('DOMContentLoaded', () => {
-    game = new Game(); // Assign to global variable
+    new SpaceBackground();
+    game = new Game();
+
+    // Store category switching
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    const storeItems = document.querySelectorAll('.store-item');
+
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update active button
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Show/hide items
+            const category = btn.dataset.category;
+            storeItems.forEach(item => {
+                if (item.dataset.category === category) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Update store coins display
+    const updateStoreCoins = () => {
+        document.getElementById('storeTotalCoins').textContent = game.totalCoins;
+    };
+
+    // Update coins when store opens
+    document.getElementById('storeButton').addEventListener('click', updateStoreCoins);
 }); 

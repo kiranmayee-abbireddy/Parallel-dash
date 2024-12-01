@@ -7,17 +7,315 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <canvas id="spaceBackground"></canvas>
+
     <div class="intro-screen" id="introScreen">
         <div class="intro-content">
-            <h1 class="game-title">Parallel Dash</h1>
+            <div class="intro-header">
+                <h1 class="game-title">Parallel Dash</h1>
+                <button class="store-button" id="storeButton">Store</button>
+            </div>
             
+            <div class="store-modal" id="storeModal">
+                <h2>Store</h2>
+                <div class="store-coins">
+                    <span class="coin-icon">🪙</span>
+                    <span id="storeTotalCoins">0</span>
+                </div>
+                <div class="store-categories">
+                    <button class="category-btn active" data-category="skins">Skins</button>
+                    <button class="category-btn" data-category="accessories">Accessories</button>
+                    <button class="category-btn" data-category="backgrounds">Backgrounds</button>
+                </div>
+                <div class="store-grid">
+                    <!-- Free Skins -->
+                    <div class="store-item" data-category="skins">
+                        <h3>Default</h3>
+                        <div class="item-preview" data-skin="default">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="default-skin" data-price="5">5 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Basic Blue & Red</h3>
+                        <div class="item-preview" data-skin="basic-blue-red">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="basic-blue-red-skin" data-price="5">5 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Basic Purple & Orange</h3>
+                        <div class="item-preview" data-skin="basic-purple-orange">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="basic-purple-orange-skin" data-price="0">0 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Basic Green & Pink</h3>
+                        <div class="item-preview" data-skin="basic-green-pink">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="basic-green-pink-skin" data-price="0">0 🪙</button>
+                    </div>
+
+                    <!-- Paid Skins (in price order) -->
+                    <div class="store-item" data-category="skins">
+                        <h3>Ocean & Sunset</h3>
+                        <div class="item-preview" data-skin="ocean-sunset">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="ocean-sunset-skin" data-price="20">20 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Mint & Rose</h3>
+                        <div class="item-preview" data-skin="mint-rose">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="mint-rose-skin" data-price="25">25 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Lavender & Gold</h3>
+                        <div class="item-preview" data-skin="lavender-gold">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="lavender-gold-skin" data-price="30">30 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Forest & Coral</h3>
+                        <div class="item-preview" data-skin="forest-coral">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="forest-coral-skin" data-price="35">35 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Royal & Amber</h3>
+                        <div class="item-preview" data-skin="royal-amber">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="royal-amber-skin" data-price="40">40 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Twilight & Dawn</h3>
+                        <div class="item-preview" data-skin="twilight-dawn">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="twilight-dawn-skin" data-price="45">45 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Emerald & Ruby</h3>
+                        <div class="item-preview" data-skin="emerald-ruby">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="emerald-ruby-skin" data-price="55">55 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Arctic & Tropical</h3>
+                        <div class="item-preview" data-skin="arctic-tropical">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="arctic-tropical-skin" data-price="60">60 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Bubble Prism</h3>
+                        <div class="item-preview" data-skin="geometric-prism">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="geometric-prism-skin" data-price="75">75 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Circuit Board</h3>
+                        <div class="item-preview" data-skin="circuit">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="circuit-skin" data-price="80">80 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Metallic Chrome</h3>
+                        <div class="item-preview" data-skin="metallic">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="metallic-skin" data-price="85">85 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Crystal Facets</h3>
+                        <div class="item-preview" data-skin="crystal-facets">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="crystal-facets-skin" data-price="90">90 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Holographic</h3>
+                        <div class="item-preview" data-skin="holographic">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="holographic-skin" data-price="95">95 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="skins">
+                        <h3>Liquid Mercury</h3>
+                        <div class="item-preview" data-skin="mercury">
+                            <div class="preview-left"></div>
+                            <div class="preview-right"></div>
+                        </div>
+                        <button data-item="mercury-skin" data-price="100">100 🪙</button>
+                    </div>
+
+                    <!-- Accessories (in price order) -->
+                    <!-- Default (No Accessory) - Always equipped by default -->
+                    <div class="store-item" data-category="accessories">
+                        <h3>No Accessory</h3>
+                        <div class="item-preview">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="none" data-price="0" class="equipped">Equipped</button>
+                    </div>
+
+                    <!-- Paid Accessories (in price order) -->
+                    <div class="store-item" data-category="accessories">
+                        <h3>Cool Glasses</h3>
+                        <div class="item-preview" data-accessory="glasses">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="glasses" data-price="40">40 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="accessories">
+                        <h3>Baseball Cap</h3>
+                        <div class="item-preview" data-accessory="cap">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="cap" data-price="50">50 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="accessories">
+                        <h3>Pink Bow</h3>
+                        <div class="item-preview" data-accessory="bow">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="bow" data-price="50">50 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="accessories">
+                        <h3>Bunny Ears</h3>
+                        <div class="item-preview" data-accessory="bunny-ears">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="bunny-ears" data-price="60">60 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="accessories">
+                        <h3>Hero Cape</h3>
+                        <div class="item-preview" data-accessory="hero-cape">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="hero-cape" data-price="75">75 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="accessories">
+                        <h3>Flower Crown</h3>
+                        <div class="item-preview" data-accessory="flower-crown">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="flower-crown" data-price="75">75 🪙</button>
+                    </div>
+
+                    <div class="store-item" data-category="accessories">
+                        <h3>Royal Crown</h3>
+                        <div class="item-preview" data-accessory="crown">
+                            <div class="preview-left default-skin"></div>
+                            <div class="preview-right default-skin"></div>
+                        </div>
+                        <button data-item="crown" data-price="100">100 🪙</button>
+                    </div>
+
+                    <!-- Backgrounds -->
+                    <div class="store-item" data-category="backgrounds" style="display: none;">
+                        <h3>Nebula Sky</h3>
+                        <div class="item-preview" data-item="nebula-bg"></div>
+                        <button data-item="nebula-bg" data-price="150">150 🪙</button>
+                    </div>
+                    <div class="store-item" data-category="backgrounds" style="display: none;">
+                        <h3>Aurora Space</h3>
+                        <div class="item-preview aurora-bg"></div>
+                        <button data-item="aurora-bg" data-price="250">250 🪙</button>
+                    </div>
+                    <div class="store-item" data-category="backgrounds" style="display: none;">
+                        <h3>Cyber Grid</h3>
+                        <div class="item-preview cyber-bg"></div>
+                        <button data-item="cyber-bg" data-price="350">350 🪙</button>
+                    </div>
+                    <div class="store-item" data-category="backgrounds" style="display: none;">
+                        <h3>Quantum Field</h3>
+                        <div class="item-preview quantum-bg"></div>
+                        <button data-item="quantum-bg" data-price="450">450 🪙</button>
+                    </div>
+                    <div class="store-item" data-category="backgrounds" style="display: none;">
+                        <h3>Dark Matter</h3>
+                        <div class="item-preview darkmatter-bg"></div>
+                        <button data-item="darkmatter-bg" data-price="500">500 🪙</button>
+                    </div>
+                </div>
+                <button id="closeStore">Close Store</button>
+            </div>
+
+            <div class="nickname-prompt" id="nicknamePrompt">
+                <h2>Name Your Character</h2>
+                <div class="character-preview">
+                    <div class="preview-left"></div>
+                    <div class="preview-right"></div>
+                </div>
+                <div class="nickname-input-container">
+                    <input type="text" id="nicknameInput" maxlength="12" placeholder="Enter nickname..." autocomplete="off">
+                    <button id="confirmNickname">Confirm</button>
+                </div>
+            </div>
+
             <div class="demo-container">
                 <div class="demo-section">
-                    <div class="demo-character left"></div>
+                    <div class="demo-character left default-skin"></div>
                     <div class="demo-platform"></div>
                 </div>
                 <div class="demo-section">
-                    <div class="demo-character right"></div>
+                    <div class="demo-character right default-skin"></div>
                     <div class="demo-platform"></div>
                 </div>
             </div>
@@ -66,13 +364,13 @@
         </div>
     </div>
 
-    <div class="game-container">
+    <div class="game-container" style="background: transparent;">
         <!-- Header with coin display -->
         <div class="header">
             <h1>Parallel Dash</h1>
             <div class="coin-display">
-                Level Coins: <span id="coinCount">0</span><br>
-                Total Coins: <span id="totalCoins">0</span>
+                <div>Level Coins: <span id="coinCount">0</span></div>
+                <div>Total Coins: <span id="totalCoins">0</span></div>
             </div>
         </div>
 
@@ -94,36 +392,7 @@
                 <span>⌂</span> Home
             </button>
             <button class="pause-button" id="pauseButton">Pause</button>
-            <button class="store-button" id="storeButton">Store</button>
             <button id="restartButton">Restart Level</button>
-        </div>
-
-        <!-- Store Modal -->
-        <div class="store-modal" id="storeModal">
-            <h2>Store</h2>
-            <div class="store-grid">
-                <div class="store-item">
-                    <h3>Basic Color Pack</h3>
-                    <p>1000 coins</p>
-                    <button>Purchase</button>
-                </div>
-                <div class="store-item">
-                    <h3>Themed Outfit</h3>
-                    <p>2000 coins</p>
-                    <button>Purchase</button>
-                </div>
-                <div class="store-item">
-                    <h3>Special Trail</h3>
-                    <p>3000 coins</p>
-                    <button>Purchase</button>
-                </div>
-                <div class="store-item">
-                    <h3>Animated Skin</h3>
-                    <p>5000 coins</p>
-                    <button>Purchase</button>
-                </div>
-            </div>
-            <button id="closeStore">Close Store</button>
         </div>
 
         <div class="level-display" id="levelDisplay">Level 1</div>
@@ -157,16 +426,36 @@
     <div class="countdown-overlay" id="countdownOverlay"></div>
 
     <div class="level-complete-screen" id="levelCompleteScreen">
-        <h2>Level Complete!</h2>
+        <h2>Level <span id="completedLevel"></span> Complete!</h2>
+        <div class="completion-animation">
+            <div class="character-left default-skin"></div>
+            <div class="character-right default-skin"></div>
+            <div class="hearts-container"></div>
+        </div>
         <div class="level-stats" id="levelStats"></div>
         <button class="next-level-button">Next Level</button>
     </div>
 
     <div class="game-over-screen" id="gameOverScreen">
         <h2 class="game-over-message">Game Over</h2>
+        <div class="game-over-animation">
+            <div class="portal-left"></div>
+            <div class="portal-right"></div>
+            <div class="game-over-character-left default-skin"></div>
+            <div class="game-over-character-right default-skin"></div>
+        </div>
         <div class="button-container">
             <button class="retry-button">Try Again</button>
             <button class="menu-button">Back to Menu</button>
+        </div>
+    </div>
+
+    <div class="modal-card" id="confirmModal">
+        <h2>Return to Menu?</h2>
+        <p>Your progress will be saved.</p>
+        <div class="modal-buttons">
+            <button class="modal-button confirm" id="confirmYes">Yes</button>
+            <button class="modal-button cancel" id="confirmNo">No</button>
         </div>
     </div>
 </body>
