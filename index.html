@@ -2,15 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mirror Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, height=device-height, viewport-fit=cover">
+    <title>Parallel Dash</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class="intro-screen" id="introScreen">
+        <div class="intro-content">
+            <h1 class="game-title">Parallel Dash</h1>
+            
+            <div class="demo-container">
+                <div class="demo-section">
+                    <div class="demo-character left"></div>
+                    <div class="demo-platform"></div>
+                </div>
+                <div class="demo-section">
+                    <div class="demo-character right"></div>
+                    <div class="demo-platform"></div>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h2>How to Play</h2>
+                <div class="instructions-container">
+                    <!-- Desktop Controls -->
+                    <div class="instruction-item" data-desktop>
+                        <span class="key">W</span>
+                        <span class="key">↑</span>
+                        <span>Jump</span>
+                    </div>
+                    <div class="movement-controls" data-desktop>
+                        <div class="instruction-item">
+                            <span class="key">A</span>
+                            <span class="key">←</span>
+                            <span>Move Left</span>
+                        </div>
+                        <div class="instruction-item">
+                            <span class="key">D</span>
+                            <span class="key">→</span>
+                            <span>Move Right</span>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Controls -->
+                    <div class="instruction-item" data-mobile>
+                        <span>Tap to Jump</span>
+                    </div>
+                    <div class="instruction-item" data-mobile>
+                        <span>Swipe Left/Right to Move</span>
+                    </div>
+
+                    <!-- Common Instructions -->
+                    <div class="instruction-item">
+                        <span>Collect coins</span>
+                    </div>
+                    <div class="instruction-item">
+                        <span>Avoid obstacles</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="start-button" id="startButton">Start Game</button>
+        </div>
+    </div>
+
     <div class="game-container">
         <!-- Header with coin display -->
         <div class="header">
-            <h1>Mirror Runner</h1>
+            <h1>Parallel Dash</h1>
             <div class="coin-display">
                 Coins: <span id="coinCount">0</span>
             </div>
@@ -30,6 +89,9 @@
 
         <!-- Game controls -->
         <div class="controls">
+            <button class="home-button" id="homeButton">
+                <span>⌂</span> Home
+            </button>
             <button class="pause-button" id="pauseButton">Pause</button>
             <button class="store-button" id="storeButton">Store</button>
             <button id="restartButton">Restart Level</button>
@@ -62,6 +124,8 @@
             </div>
             <button id="closeStore">Close Store</button>
         </div>
+
+        <div class="level-display" id="levelDisplay">Level 1</div>
     </div>
 
     <script>
