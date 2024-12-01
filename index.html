@@ -19,12 +19,10 @@
         <!-- Game screen with two mirrored sections -->
         <div class="game-screen">
             <div class="character-section left" id="leftSection">
-                <div class="character left" id="leftCharacter" style="bottom: 20px; left: 20px;"></div>
                 <div class="platform" style="bottom: 0; left: 0; width: 100%; height: 20px;"></div>
                 <div class="coin" style="top: 100px; left: 100px;"></div>
             </div>
             <div class="character-section right" id="rightSection">
-                <div class="character right" id="rightCharacter" style="bottom: 20px; right: 20px;"></div>
                 <div class="platform" style="bottom: 0; right: 0; width: 100%; height: 20px;"></div>
                 <div class="coin" style="top: 100px; right: 100px;"></div>
             </div>
@@ -67,25 +65,28 @@
     </div>
 
     <script>
-        // Basic store functionality
-        const storeButton = document.getElementById('storeButton');
-        const storeModal = document.getElementById('storeModal');
-        const closeStore = document.getElementById('closeStore');
+        // Store functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const storeButton = document.getElementById('storeButton');
+            const storeModal = document.getElementById('storeModal');
+            const closeStore = document.getElementById('closeStore');
 
-        storeButton.addEventListener('click', () => {
-            storeModal.style.display = 'block';
-        });
+            storeButton.addEventListener('click', () => {
+                storeModal.style.display = 'block';
+            });
 
-        closeStore.addEventListener('click', () => {
-            storeModal.style.display = 'none';
-        });
-
-        // Close store when clicking outside
-        window.addEventListener('click', (event) => {
-            if (event.target === storeModal) {
+            closeStore.addEventListener('click', () => {
                 storeModal.style.display = 'none';
-            }
+            });
+
+            // Close store when clicking outside
+            window.addEventListener('click', (event) => {
+                if (event.target === storeModal) {
+                    storeModal.style.display = 'none';
+                }
+            });
         });
     </script>
+    <script src="game.js"></script>
 </body>
 </html> 
