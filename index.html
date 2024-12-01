@@ -2,114 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mirror Runner</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            font-family: 'Arial', sans-serif;
-        }
-
-        .game-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background-color: #333;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .coin-display {
-            font-size: 24px;
-            color: #ffd700;
-        }
-
-        .game-screen {
-            display: flex;
-            background-color: #2a2a2a;
-            border-radius: 10px;
-            height: 600px;
-            margin-bottom: 20px;
-        }
-
-        .character-section {
-            flex: 1;
-            border: 2px solid #444;
-            position: relative;
-        }
-
-        .character-section.left {
-            border-right: 1px solid #444;
-        }
-
-        .character-section.right {
-            border-left: 1px solid #444;
-        }
-
-        .controls {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            background-color: #4a4a4a;
-            color: white;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #666;
-        }
-
-        .store-button {
-            background-color: #4CAF50;
-        }
-
-        .pause-button {
-            background-color: #f44336;
-        }
-
-        .store-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #333;
-            padding: 20px;
-            border-radius: 10px;
-            z-index: 1000;
-        }
-
-        .store-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .store-item {
-            background-color: #4a4a4a;
-            padding: 10px;
-            border-radius: 5px;
-            text-align: center;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="game-container">
@@ -124,10 +19,14 @@
         <!-- Game screen with two mirrored sections -->
         <div class="game-screen">
             <div class="character-section left" id="leftSection">
-                <!-- Left character and obstacles will be rendered here -->
+                <div class="character left" id="leftCharacter" style="bottom: 20px; left: 20px;"></div>
+                <div class="platform" style="bottom: 0; left: 0; width: 100%; height: 20px;"></div>
+                <div class="coin" style="top: 100px; left: 100px;"></div>
             </div>
             <div class="character-section right" id="rightSection">
-                <!-- Right character and obstacles will be rendered here -->
+                <div class="character right" id="rightCharacter" style="bottom: 20px; right: 20px;"></div>
+                <div class="platform" style="bottom: 0; right: 0; width: 100%; height: 20px;"></div>
+                <div class="coin" style="top: 100px; right: 100px;"></div>
             </div>
         </div>
 
