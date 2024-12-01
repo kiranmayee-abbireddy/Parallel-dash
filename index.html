@@ -71,7 +71,8 @@
         <div class="header">
             <h1>Parallel Dash</h1>
             <div class="coin-display">
-                Coins: <span id="coinCount">0</span>
+                Level Coins: <span id="coinCount">0</span><br>
+                Total Coins: <span id="totalCoins">0</span>
             </div>
         </div>
 
@@ -152,5 +153,21 @@
         });
     </script>
     <script src="game.js"></script>
+
+    <div class="countdown-overlay" id="countdownOverlay"></div>
+
+    <div class="level-complete-screen" id="levelCompleteScreen">
+        <h2>Level Complete!</h2>
+        <div class="level-stats" id="levelStats"></div>
+        <button class="next-level-button">Next Level</button>
+    </div>
+
+    <div class="game-over-screen" id="gameOverScreen">
+        <h2 class="game-over-message">Game Over</h2>
+        <div class="button-container">
+            <button class="retry-button">Try Again</button>
+            <button class="menu-button">Back to Menu</button>
+        </div>
+    </div>
 </body>
 </html> 
