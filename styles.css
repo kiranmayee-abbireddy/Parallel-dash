@@ -281,6 +281,55 @@ button.pause-button {
     .store-grid {
         grid-template-columns: 1fr;
     }
+
+    /* Stack game sections vertically while maintaining horizontal mirroring */
+    .game-screen {
+        flex-direction: column;
+    }
+
+    .character-section.left {
+        border-right: none;
+        border-bottom: 1px solid #444;
+    }
+
+    .character-section.right {
+        border-left: none;
+        border-top: 1px solid #444;
+        transform: scaleX(-1); /* Flip the bottom section horizontally */
+    }
+
+    /* Adjust character positions for vertical layout */
+    .character.left {
+        bottom: 20px !important;
+        left: 20px !important;
+    }
+
+    .character.right {
+        bottom: 20px !important; /* Keep same vertical position as left character */
+        left: 20px !important; /* Mirror will flip this to the right */
+        transform: scaleX(-1); /* Counter the parent flip to maintain character appearance */
+    }
+
+    /* Adjust platform positions */
+    .character-section.left .platform {
+        bottom: 0 !important;
+    }
+
+    .character-section.right .platform {
+        bottom: 0 !important; /* Keep same position as left platform */
+    }
+
+    /* Adjust coin positions */
+    .character-section.left .coin {
+        bottom: 100px !important;
+        left: 100px !important;
+    }
+
+    .character-section.right .coin {
+        bottom: 100px !important; /* Same vertical position as left coin */
+        left: 100px !important; /* Mirror will flip this to the right */
+        transform: scaleX(-1); /* Counter the parent flip to maintain appearance */
+    }
 }
 
 @media (max-height: 600px) {
