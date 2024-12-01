@@ -5960,3 +5960,55 @@ canvas#spaceBackground {
 }
 
 /* Continue for other skins... */
+
+/* Add color inheritance for basic skins */
+.basic-blue-red-skin .accessory.left {
+    --accent-color: #0984e3;
+    --accent-glow: rgba(9, 132, 227, 0.6);
+}
+
+.basic-blue-red-skin .accessory.right {
+    --accent-color: #ff4757;
+    --accent-glow: rgba(255, 71, 87, 0.6);
+}
+
+.basic-purple-orange-skin .accessory.left {
+    --accent-color: #9c88ff;
+    --accent-glow: rgba(156, 136, 255, 0.6);
+}
+
+.basic-purple-orange-skin .accessory.right {
+    --accent-color: #ffa502;
+    --accent-glow: rgba(255, 165, 2, 0.6);
+}
+
+.basic-green-pink-skin .accessory.left {
+    --accent-color: #2ecc71;
+    --accent-glow: rgba(46, 204, 113, 0.6);
+}
+
+.basic-green-pink-skin .accessory.right {
+    --accent-color: #ff6b81;
+    --accent-glow: rgba(255, 107, 129, 0.6);
+}
+
+/* Make sure accessories inherit colors properly */
+.accessory.left, .accessory.right {
+    --accent-color: inherit;
+    --accent-glow: inherit;
+}
+
+/* Update preview styles for basic skins */
+.item-preview[data-skin="basic-blue-red"] .preview-left .accessory,
+.item-preview[data-skin="basic-purple-orange"] .preview-left .accessory,
+.item-preview[data-skin="basic-green-pink"] .preview-left .accessory {
+    --accent-color: inherit;
+    --accent-glow: inherit;
+}
+
+.item-preview[data-skin="basic-blue-red"] .preview-right .accessory,
+.item-preview[data-skin="basic-purple-orange"] .preview-right .accessory,
+.item-preview[data-skin="basic-green-pink"] .preview-right .accessory {
+    --accent-color: inherit;
+    --accent-glow: inherit;
+}

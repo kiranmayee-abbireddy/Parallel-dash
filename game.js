@@ -11,12 +11,20 @@ class Character {
         this.isJumping = false;
         this.isClimbing = false;
         this.climbSpeed = 4;
-        this.createCharacter();
         
-        // Apply current skin immediately after creation
-        if (window.game && window.game.currentSkin) {
-            this.applySkin(window.game.currentSkin);
+        // Get game instance
+        this.game = window.game;
+        
+        // Create the character element
+        this.element = this.createCharacter();
+        
+        // Add to appropriate section
+        const section = document.getElementById(`${this.side}Section`);
+        if (section) {
+            section.appendChild(this.element);
         }
+        
+        // Initialize other properties
         this.doubleJumpAvailable = true;
         this.lastJumpTime = 0;
         this.jumpCount = 0;
@@ -30,20 +38,26 @@ class Character {
     }
 
     createCharacter() {
-        this.element = document.createElement('div');
-        this.element.className = `character ${this.side}`;
-        this.element.id = `${this.side}Character`;
-        this.updatePosition();
+        const element = document.createElement('div');
+        element.className = `character ${this.side}`;
         
-        // Add accessory if one is equipped
-        if (window.game && window.game.currentAccessory) {
-            const accessory = document.createElement('div');
-            accessory.className = `accessory ${window.game.currentAccessory} ${this.side}`;
-            this.element.appendChild(accessory);
+        // Apply current skin if available
+        if (this.game && this.game.currentSkin) {
+            element.classList.add(this.game.currentSkin);
         }
         
-        const section = document.getElementById(`${this.side}Section`);
-        section.appendChild(this.element);
+        // Set initial position
+        element.style.left = `${this.x}px`;
+        element.style.bottom = `${this.y}px`;
+        
+        // Add current accessory if one is equipped
+        if (this.game && this.game.currentAccessory && this.game.currentAccessory !== 'none') {
+            const accessory = document.createElement('div');
+            accessory.className = `accessory ${this.game.currentAccessory} ${this.side}`;
+            element.appendChild(accessory);
+        }
+        
+        return element;
     }
 
     updatePosition() {
@@ -51,10 +65,11 @@ class Character {
             if (this.side === 'left') {
                 this.element.style.left = `${this.x}px`;
             } else {
-                // For right character, position from right edge
                 const section = document.getElementById('rightSection');
-                const rightPosition = section.offsetWidth - this.x - this.element.offsetWidth;
-                this.element.style.left = `${rightPosition}px`;
+                if (section) {
+                    const rightPosition = section.offsetWidth - this.x - this.element.offsetWidth;
+                    this.element.style.left = `${rightPosition}px`;
+                }
             }
             this.element.style.bottom = `${this.y}px`;
         }
@@ -414,21 +429,24 @@ class Game {
 
     init() {
         // Create characters
-        this.characterA = new Character('left', 20, 20);
-        const rightSection = document.getElementById('rightSection');
-        const rightStartX = rightSection.offsetWidth - 60;
-        this.characterB = new Character('right', rightStartX, 20);
+        this.characterA = new Character('left', 50, 20);
+        this.characterB = new Character('right', 50, 20);
         
-        // Apply current skin to new characters
-        if (this.currentSkin && this.currentSkin !== 'default-skin') {
-            this.characterA.element.classList.add(this.currentSkin);
-            this.characterB.element.classList.add(this.currentSkin);
-        } else {
-            // Always ensure default skin is applied if no other skin is set
-            this.characterA.element.classList.add('default-skin');
-            this.characterB.element.classList.add('default-skin');
-        }
-        
+        // Apply current skin and accessories
+        [this.characterA, this.characterB].forEach(char => {
+            if (char && char.element) {
+                // Apply skin
+                char.element.classList.add(this.currentSkin || 'default-skin');
+                
+                // Apply accessory if one is equipped
+                if (this.currentAccessory && this.currentAccessory !== 'none') {
+                    const accessory = document.createElement('div');
+                    accessory.className = `accessory ${this.currentAccessory} ${char.side}`;
+                    char.element.appendChild(accessory);
+                }
+            }
+        });
+
         // Set up controls
         this.setupControls();
     }
@@ -516,13 +534,25 @@ class Game {
                         // Add new skin class
                         char.className = [...baseClasses, newSkin].join(' ');
 
-                        // Special handling for demo characters to ensure animations persist
+                        // Preserve demo animations
                         if (char.classList.contains('demo-character')) {
-                            if (char.classList.contains('left')) {
-                                char.style.animation = 'demoMoveLeft 4s infinite';
-                            } else if (char.classList.contains('right')) {
-                                char.style.animation = 'demoMoveRight 4s infinite';
+                            const isRight = char.classList.contains('right');
+                            const animationName = isRight ? 'demoMoveRight' : 'demoMoveLeft';
+                            char.style.animation = `${animationName} 4s infinite`;
+                        }
+
+                        // Re-apply accessory if one is equipped
+                        if (this.currentAccessory && this.currentAccessory !== 'none') {
+                            // Remove existing accessory if any
+                            const existingAccessory = char.querySelector('.accessory');
+                            if (existingAccessory) {
+                                existingAccessory.remove();
                             }
+                            
+                            // Add new accessory
+                            const accessory = document.createElement('div');
+                            accessory.className = `accessory ${this.currentAccessory} ${char.classList.contains('right') ? 'right' : 'left'}`;
+                            char.appendChild(accessory);
                         }
                     }
                 });
@@ -1412,7 +1442,7 @@ class Game {
             this.characterB?.element
         ];
 
-        // Update each character's skin
+        // Update each character's skin and maintain animations
         allCharacters.forEach(char => {
             if (char) {
                 // Keep position and base classes
@@ -1421,15 +1451,27 @@ class Game {
                     .filter(cls => !cls.endsWith('-skin') && cls !== 'at-portal');
                 
                 // Add new skin class
-                char.className = [...baseClasses, `${newSkin}`].join(' ');
+                char.className = [...baseClasses, newSkin].join(' ');
 
-                // Special handling for demo characters to ensure animations persist
+                // Preserve demo animations
                 if (char.classList.contains('demo-character')) {
-                    if (char.classList.contains('left')) {
-                        char.style.animation = 'demoMoveLeft 4s infinite';
-                    } else if (char.classList.contains('right')) {
-                        char.style.animation = 'demoMoveRight 4s infinite';
+                    const isRight = char.classList.contains('right');
+                    const animationName = isRight ? 'demoMoveRight' : 'demoMoveLeft';
+                    char.style.animation = `${animationName} 4s infinite`;
+                }
+
+                // Re-apply accessory if one is equipped
+                if (this.currentAccessory && this.currentAccessory !== 'none') {
+                    // Remove existing accessory if any
+                    const existingAccessory = char.querySelector('.accessory');
+                    if (existingAccessory) {
+                        existingAccessory.remove();
                     }
+                    
+                    // Add new accessory
+                    const accessory = document.createElement('div');
+                    accessory.className = `accessory ${this.currentAccessory} ${char.classList.contains('right') ? 'right' : 'left'}`;
+                    char.appendChild(accessory);
                 }
             }
         });
@@ -1504,6 +1546,7 @@ class Game {
         // Add current accessory if one is equipped
         if (this.currentAccessory && this.currentAccessory !== 'none') {
             const accessory = document.createElement('div');
+            // Make sure to add the side class for proper color inheritance
             accessory.className = `accessory ${this.currentAccessory} ${side}`;
             character.appendChild(accessory);
         }
