@@ -425,6 +425,43 @@ class Game {
         if (!this.playerNickname) {
             this.showNicknamePrompt();
         }
+
+        this.themes = {
+            'default-theme': {
+                primary: '#4facfe',
+                secondary: '#00f2fe',
+                glow: 'rgba(79, 172, 254, 0.5)'
+            },
+            'cyan-theme': {
+                primary: '#00CED1',
+                secondary: '#40E0D0',
+                glow: 'rgba(0, 206, 209, 0.5)'
+            },
+            'teal-theme': {
+                primary: '#008080',
+                secondary: '#20B2AA',
+                glow: 'rgba(0, 128, 128, 0.5)'
+            },
+            'coral-theme': {
+                primary: '#FF7F50',
+                secondary: '#FA8072',
+                glow: 'rgba(255, 127, 80, 0.5)'
+            },
+            'orange-theme': {
+                primary: '#FFA500',
+                secondary: '#FFB84D',
+                glow: 'rgba(255, 165, 0, 0.5)'
+            },
+            'pink-theme': {
+                primary: '#FF69B4',
+                secondary: '#FFB6C1',
+                glow: 'rgba(255, 105, 180, 0.5)'
+            }
+        };
+        
+        // Load saved theme
+        this.currentTheme = localStorage.getItem('currentTheme') || 'default-theme';
+        this.applyTheme(this.currentTheme);
     }
 
     init() {
@@ -480,6 +517,8 @@ class Game {
         if (!this.playerNickname) {
             this.showNicknamePrompt();
         }
+
+        this.loadSavedAccessory();
     }
 
     createCharacters() {
@@ -1533,57 +1572,49 @@ class Game {
         this.updateStoreButtons();
     }
 
-    // Add method to apply accessory to a character
-    applyAccessoryToCharacter(character, isRight) {
-        if (!character) return;
-        
-        // Remove any existing accessories
-        const existingAccessory = character.querySelector('.accessory');
-        if (existingAccessory) {
-            existingAccessory.remove();
-        }
-
-        // If there's a current accessory, add it with gender-specific class
-        if (this.currentAccessory) {
-            const accessory = document.createElement('div');
-            accessory.className = `accessory ${this.currentAccessory} ${isRight ? 'right' : 'left'}`;
-            character.appendChild(accessory);
-        }
-    }
-
     // Add method to equip accessory
     equipAccessory(accessoryId) {
         this.currentAccessory = accessoryId;
         localStorage.setItem('currentAccessory', accessoryId);
         
-        // Apply to all character instances
+        // Get all character instances
         const allCharacters = [
             ...document.querySelectorAll('.demo-character'),
+            ...document.querySelectorAll('.character'),
             ...document.querySelectorAll('.game-over-character-left, .game-over-character-right'),
             ...document.querySelectorAll('.completion-animation .character-left, .completion-animation .character-right'),
             this.characterA?.element,
             this.characterB?.element
-        ];
+        ].filter(Boolean); // Remove null/undefined entries
 
+        // Remove existing accessories from all characters
         allCharacters.forEach(char => {
-            if (char) {
-                // Remove existing accessory if any
-                const existingAccessory = char.querySelector('.accessory');
-                if (existingAccessory) {
-                    existingAccessory.remove();
-                }
-
-                // Add new accessory if not 'none'
-                if (accessoryId !== 'none') {
-                    const accessory = document.createElement('div');
-                    accessory.className = `accessory ${accessoryId} ${char.classList.contains('right') ? 'right' : 'left'}`;
-                    char.appendChild(accessory);
-                }
+            const existingAccessory = char.querySelector('.accessory');
+            if (existingAccessory) {
+                existingAccessory.remove();
             }
         });
-        
+
+        // Add new accessory if not 'none'
+        if (accessoryId !== 'none') {
+            allCharacters.forEach(char => {
+                const accessory = document.createElement('div');
+                const side = char.classList.contains('right') ? 'right' : 'left';
+                accessory.className = `accessory ${accessoryId} ${side}`;
+                char.appendChild(accessory);
+            });
+        }
+
         // Update store buttons
         this.updateStoreButtons();
+    }
+
+    // Add method to load saved accessory
+    loadSavedAccessory() {
+        const savedAccessory = localStorage.getItem('currentAccessory');
+        if (savedAccessory) {
+            this.equipAccessory(savedAccessory);
+        }
     }
 
     // Add method to apply accessory when creating new characters
@@ -1618,6 +1649,58 @@ class Game {
         }
         
         // ... rest of load code ...
+    }
+
+    buyItem(itemId, price) {
+        if (this.coins >= price) {
+            this.coins -= price;
+            this.totalCoins -= price;  // Deduct from total coins too
+            this.ownedItems.add(itemId);
+            localStorage.setItem('ownedItems', JSON.stringify([...this.ownedItems]));
+            
+            // Save both current coins and total coins
+            const savedProgress = {
+                currentLevel: this.currentLevel,
+                totalCoins: this.totalCoins,
+                highestLevel: this.getHighestLevel()
+            };
+            localStorage.setItem('gameProgress', JSON.stringify(savedProgress));
+            
+            // Handle different item types
+            if (itemId.includes('skin')) {
+                this.equipSkin(itemId);
+            } else if (itemId !== 'none') {
+                this.equipAccessory(itemId);
+            }
+            
+            this.updateStoreButtons();
+            this.updateCoinsDisplay();
+            this.storeTotalCoins.textContent = this.totalCoins;  // Update store coins display
+        }
+    }
+
+    applyTheme(themeId) {
+        const theme = this.themes[themeId];
+        if (!theme) return;
+
+        // Apply theme colors to CSS variables
+        document.documentElement.style.setProperty('--theme-primary', theme.primary);
+        document.documentElement.style.setProperty('--theme-secondary', theme.secondary);
+        document.documentElement.style.setProperty('--theme-glow', theme.glow);
+
+        // Update current theme
+        this.currentTheme = themeId;
+        localStorage.setItem('currentTheme', themeId);
+
+        // Update store buttons
+        this.updateStoreButtons();
+
+        // Update all characters with new theme colors
+        const allCharacters = document.querySelectorAll('.character.left, .demo-character.left, .game-over-character-left, .completion-animation .character-left');
+        allCharacters.forEach(char => {
+            char.style.background = `linear-gradient(45deg, ${theme.primary}, ${theme.secondary})`;
+            char.style.boxShadow = `0 0 15px ${theme.glow}`;
+        });
     }
 }
 
