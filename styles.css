@@ -19,7 +19,7 @@ html, body {
     height: 100vh;
     background: transparent;
     z-index: 2000;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
 }
 
 .intro-content {
@@ -321,7 +321,7 @@ html, body {
     height: 100vh;
     background: transparent;
     z-index: 2000;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
 }
 
 .intro-content {
@@ -694,6 +694,7 @@ html, body {
     box-sizing: border-box;
     max-width: 1200px;
     margin: 0 auto;
+    transition: opacity 0.2s ease;
 }
 
 /* Header Styles */
@@ -1398,24 +1399,66 @@ html, body {
     border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+/* Progress display styling */
 .progress-display {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #fff;
     text-align: center;
-    margin: 20px 0;
-    padding: 10px;
-    background: rgba(79, 172, 254, 0.1);
-    border-radius: 10px;
+    margin: 10px 0;
+    padding: 12px 20px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 15px;
     animation: fadeIn 0.5s ease-in;
     border: 1px solid rgba(79, 172, 254, 0.3);
     box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
+    backdrop-filter: blur(5px);
+    line-height: 1.6;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Make text more visible */
+.progress-display span {
+    color: #4facfe;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+    font-weight: bold;
 }
 
+/* Mobile adjustments for progress display */
+@media (max-width: 768px) {
+    .progress-display {
+        font-size: 1rem;
+        padding: 10px 15px;
+        margin: 8px 0;
+        width: 80%;
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Update instruction visibility for mobile/tablet */
+@media (max-width: 768px) {
+    /* Hide keyboard controls and movement controls on mobile */
+    .instruction-item[data-desktop],
+    .movement-controls[data-desktop] {
+        display: none !important;
+    }
+
+    /* Show only mobile-specific instructions */
+    .instruction-item[data-mobile] {
+        display: flex !important;
+    }
+
+    /* Adjust spacing for fewer items */
+    .instructions-container {
+        gap: 10px;
+    }
+
+    /* Make remaining instructions more prominent */
+    .instruction-item {
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
 
 /* Space Theme */
 body {
@@ -1492,7 +1535,7 @@ canvas#spaceBackground {
     text-align: center;
     min-width: 300px;
     display: none;
-    animation: modalFadeIn 0.3s ease;
+    animation: modalFadeIn 0.2s ease;
 }
 
 .modal-card h2 {
@@ -1552,7 +1595,7 @@ canvas#spaceBackground {
 @keyframes modalFadeIn {
     from {
         opacity: 0;
-        transform: translate(-50%, -60%);
+        transform: translate(-50%, -52%);
     }
     to {
         opacity: 1;
@@ -6011,4 +6054,101 @@ canvas#spaceBackground {
 .item-preview[data-skin="basic-green-pink"] .preview-right .accessory {
     --accent-color: inherit;
     --accent-glow: inherit;
+}
+
+/* Update instruction visibility for mobile/tablet */
+@media (max-width: 768px) {
+    /* Hide keyboard controls on mobile */
+    .instruction-item[data-desktop] {
+        display: none !important;
+    }
+
+    /* Show only mobile-specific instructions */
+    .instruction-item[data-mobile] {
+        display: flex !important;
+    }
+
+    /* Adjust spacing for fewer items */
+    .instructions-container {
+        gap: 10px;
+    }
+
+    /* Make remaining instructions more prominent */
+    .instruction-item {
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
+
+/* Desktop-only instructions */
+@media (min-width: 769px) {
+    .instruction-item[data-mobile] {
+        display: none !important;
+    }
+
+    .instruction-item[data-desktop],
+    .movement-controls[data-desktop] {
+        display: flex !important;
+    }
+}
+
+/* Progress display container */
+.progress-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Progress info and store button container */
+.progress-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* Store button styling */
+.store-button {
+    background: rgba(79, 172, 254, 0.15);
+    border: 1px solid rgba(79, 172, 254, 0.4);
+    color: #4facfe;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 
+        0 0 10px rgba(79, 172, 254, 0.3),
+        inset 0 0 5px rgba(79, 172, 254, 0.2);
+}
+
+.store-button:hover {
+    background: rgba(79, 172, 254, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 0 20px rgba(79, 172, 254, 0.4),
+        0 0 40px rgba(79, 172, 254, 0.2),
+        inset 0 0 10px rgba(79, 172, 254, 0.3);
+    border-color: rgba(79, 172, 254, 0.6);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .progress-display {
+        padding: 10px 15px;
+        margin: 8px 0;
+        width: 80%;
+        max-width: 300px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .store-button {
+        padding: 6px 15px;
+        font-size: 0.85rem;
+    }
 }

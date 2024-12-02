@@ -428,6 +428,61 @@ class Game {
     }
 
     init() {
+        // Cache DOM elements
+        this.gameContainer = document.querySelector('.game-container');
+        this.introScreen = document.getElementById('introScreen');
+        this.gameOverScreen = document.getElementById('gameOverScreen');
+        this.levelCompleteScreen = document.getElementById('levelCompleteScreen');
+        this.storeTotalCoins = document.getElementById('storeTotalCoins');
+
+        // Load saved progress
+        const savedProgress = JSON.parse(localStorage.getItem('gameProgress')) || {
+            currentLevel: 1,
+            totalCoins: 0,
+            highestLevel: 1
+        };
+
+        // Set initial game state
+        this.currentLevel = savedProgress.currentLevel;
+        this.totalCoins = savedProgress.totalCoins;
+        this.maxLevel = Infinity;
+        this.keys = {
+            left: false,
+            right: false,
+            jump: false,
+            up: false,
+            down: false
+        };
+        this.levels = [];
+        this.levelGenerator = new LevelGenerator();
+        
+        // Add nickname property
+        this.playerNickname = localStorage.getItem('playerNickname');
+        
+        // Initialize game
+        this.createCharacters();
+        this.setupControls();
+        this.setupIntroScreen();
+        this.generateAndLoadLevel(this.currentLevel);
+        this.pause();
+        
+        // Initialize portal states
+        this.characterAAtPortal = false;
+        this.characterBAtPortal = false;
+        
+        // Make sure all characters have skins
+        this.updateCharacterSkins(this.currentSkin);
+        
+        // Setup store
+        this.setupStore();
+        
+        // Check nickname last
+        if (!this.playerNickname) {
+            this.showNicknamePrompt();
+        }
+    }
+
+    createCharacters() {
         // Create characters
         this.characterA = new Character('left', 50, 20);
         this.characterB = new Character('right', 50, 20);
@@ -446,9 +501,6 @@ class Game {
                 }
             }
         });
-
-        // Set up controls
-        this.setupControls();
     }
 
     setupIntroScreen() {
@@ -571,6 +623,8 @@ class Game {
             introScreen.style.opacity = '0';
             setTimeout(() => {
                 introScreen.style.display = 'none';
+                const gameContainer = document.querySelector('.game-container');
+                gameContainer.style.display = 'flex';
                 this.generateAndLoadLevel(this.currentLevel);
                 this.start();
             }, 500);
@@ -653,9 +707,17 @@ class Game {
     }
 
     start() {
-        this.isRunning = true;
-        this.levelStartTime = Date.now(); // Add time tracking
-        this.update();
+        if (!this.isRunning) {
+            // Show game container if hidden
+            const gameContainer = document.querySelector('.game-container');
+            if (gameContainer.style.display === 'none') {
+                gameContainer.style.display = 'flex';
+            }
+            
+            this.isRunning = true;
+            this.levelStartTime = Date.now();
+            this.update();
+        }
     }
 
     pause() {
@@ -738,16 +800,10 @@ class Game {
                 // Get references to screens
                 const gameContainer = document.querySelector('.game-container');
                 const introScreen = document.getElementById('introScreen');
-                const demoContainer = document.querySelector('.demo-container');
                 
-                // Hide all game screens immediately
+                // Hide game screens immediately
                 document.getElementById('gameOverScreen').style.display = 'none';
                 document.getElementById('levelCompleteScreen').style.display = 'none';
-                
-                // Show intro screen and demo container
-                introScreen.style.display = 'block';
-                demoContainer.style.display = 'flex';
-                introScreen.style.opacity = '0';
                 
                 // Quick fade transition
                 gameContainer.style.opacity = '0';
@@ -758,33 +814,24 @@ class Game {
                     gameContainer.style.display = 'none';
                     
                     // Show intro screen with animation
+                    introScreen.style.display = 'block';
                     introScreen.style.opacity = '1';
                     
-                    // Make sure demo characters have current skin
-                    const leftDemo = document.querySelector('.demo-character.left');
-                    const rightDemo = document.querySelector('.demo-character.right');
-                    if (leftDemo && rightDemo) {
-                        [leftDemo, rightDemo].forEach(char => {
-                            // Remove any existing skin classes
-                            char.className = char.className
-                                .split(' ')
-                                .filter(cls => !cls.endsWith('-skin'))
-                                .join(' ');
-                            
-                            // Add current skin
-                            if (this.currentSkin !== 'default') {
-                                char.classList.add(this.currentSkin);
-                            }
-                        });
-                    }
-                    
-                    // Update menu
+                    // Update menu progress
                     this.updateMenuProgress();
                     
-                    // Reset game container state
+                    // Reset game container opacity for next time
                     gameContainer.style.opacity = '1';
-                    gameContainer.style.display = 'flex';
-                }, 100);
+                    
+                    // Clear level without restarting
+                    this.clearLevel();
+                    this.collectedCoins.clear();
+                    this.coins = 0;
+                    
+                    // Update displays
+                    document.getElementById('coinCount').textContent = this.coins;
+                    document.getElementById('totalCoins').textContent = this.totalCoins;
+                }, 200);
             };
 
             document.getElementById('confirmNo').onclick = () => {
@@ -966,6 +1013,9 @@ class Game {
             // Update displays
             document.getElementById('coinCount').textContent = this.coins;
             document.getElementById('totalCoins').textContent = this.totalCoins;
+
+            // Force reload the game instance
+            window.game = new Game();
         }, 200);
     }
 
