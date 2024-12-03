@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, height=device-height, viewport-fit=cover">
-    <title>Parallel Dash</title>
+    <title>Parallel Love</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Quicksand&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
     <canvas id="spaceBackground"></canvas>
@@ -12,7 +16,10 @@
     <div class="intro-screen" id="introScreen">
         <div class="intro-content">
             <div class="intro-header">
-                <h1 class="game-title">Parallel Dash</h1>
+                <div class="title-container">
+                    <h1 class="game-title">Parallel Love</h1>
+                    <span class="byline">by Kiryee</span>
+                </div>
                 <button class="store-button" id="storeButton">Store</button>
             </div>
             
@@ -331,5 +338,18 @@
             <button class="modal-button cancel" id="confirmNo">No</button>
         </div>
     </div>
+
+    <!-- Add this after the header div -->
+    <div class="audio-controls">
+        <button id="toggleMusic" class="audio-button">
+            <span class="music-on">🔊</span>
+            <span class="music-off" style="display: none;">🔇</span>
+        </button>
+    </div>
+
+    <!-- Add this before closing body tag -->
+    <audio id="backgroundMusic" loop>
+        <source src="assets/music/game-theme.mp3" type="audio/mpeg">
+    </audio>
 </body>
 </html> 

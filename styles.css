@@ -27,7 +27,7 @@ html, body {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: space-evenly;
     padding: clamp(10px, 2vh, 20px);
     box-sizing: border-box;
     position: relative;
@@ -36,8 +36,18 @@ html, body {
 }
 
 /* Game Title */
+.title-container {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
 .game-title {
-    font-size: clamp(2rem, 5vw, 4rem);
+    font-family: 'Fredoka One', 'Arial Rounded MT Bold', Arial, sans-serif;
+    font-size: clamp(2.2rem, 5vw, 2rem);
+    font-weight: 700;
     text-align: center;
     margin: 0;
     background: linear-gradient(45deg, #4facfe, #00f2fe, #ff6b6b, #ffd93d);
@@ -45,6 +55,20 @@ html, body {
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: titleGlow 2s ease-in-out infinite alternate;
+    text-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+    letter-spacing: 0px;
+    text-transform: uppercase;
+}
+
+.byline {
+    font-family: 'Quicksand', sans-serif;
+    display: block;
+    color: #4facfe;
+    font-size: clamp(0.9rem, 1.8vw, 1.1rem);
+    margin-top: 8px;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+    opacity: 0.9;
+    letter-spacing: 1px;
 }
 
 /* Base Demo Container */
@@ -841,6 +865,12 @@ html, body {
 
     .store-item {
         padding: 15px;
+    }
+    .title-container{
+        margin-left: -28px !important;
+    }
+    .store-button{
+        right:17%;
     }
 }
 
@@ -13422,6 +13452,7 @@ html, body {
 .demo-character .accessory.flower-crown {
     top: -15px;
     height: 15px;
+    left: 0px;
 }
 
 .demo-character .accessory.bunny-ears {
@@ -13432,6 +13463,7 @@ html, body {
 .demo-character .accessory.simple-hat {
     top: -15px;
     height: 15px;
+    left: 0px;
 }
 
 .demo-character .accessory.glasses {
@@ -13442,6 +13474,7 @@ html, body {
 .demo-character .accessory.halo {
     top: -20px;
     height: 8px;
+    left: 0px;
 }
 
 /* Demo Platform */
@@ -25573,7 +25606,7 @@ canvas#spaceBackground {
 /* Simple Hat */
 .accessory.simple-hat {
     top: -15px;
-    left: -60%;
+    left: 0px;
     width: 110%;
     height: 15px;
 }
@@ -27282,3 +27315,131 @@ canvas#spaceBackground {
     width: 110%;
     height: 8px;
 }
+/* ... existing code ... */
+
+/* Mobile Start Screen Adjustments */
+@media (max-width: 767px) {
+    .intro-content {
+        padding: 10px;
+        gap: 10px;
+        justify-content: flex-start;
+    }
+
+    .game-title {
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        margin: 5px 0;
+    }
+
+    .demo-container {
+        min-height: 120px;
+        max-height: 150px;
+        margin: 5px 0;
+        margin-top: 80px;
+    }
+
+    .instructions {
+        padding: 8px;
+        gap: 5px;
+    }
+
+    .instructions h2 {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .instruction-item {
+        padding: 6px;
+        font-size: 0.9rem;
+        min-height: 30px;
+    }
+
+    .store-button {
+        padding: 6px 15px;
+        font-size: 0.85rem;
+        margin: 5px 0;
+        transform: translateX(-100%) translateY(100%)!important;
+    }
+    .intro-header{
+        flex-direction: column;
+    }
+
+
+
+    .start-button {
+        padding: 8px 20px;
+        font-size: 1rem;
+        min-height: 36px;
+        margin-top: 5px;
+    }
+
+    /* Store modal adjustments for mobile */
+    .store-modal {
+        width: 95%;
+        max-height: 90vh;
+        padding: 10px;
+    }
+
+    .store-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .store-item {
+        padding: 8px;
+    }
+
+    .store-item h3 {
+        font-size: 0.9rem;
+        margin: 5px 0;
+    }
+}
+
+/* Even smaller screens */
+@media (max-width: 768px) and (max-height: 600px) {
+    .intro-content {
+        padding: 5px;
+        gap: 5px;
+    }
+
+    .game-title {
+        font-size: clamp(1.5rem, 3.5vw, 2rem);
+    }
+
+    .demo-container {
+        min-height: 100px;
+        max-height: 120px;
+    }
+
+    .instructions h2 {
+        display: none;
+    }
+
+    .instruction-item {
+        padding: 4px;
+        font-size: 0.8rem;
+        min-height: 25px;
+    }
+
+    .store-button {
+        padding: 4px 12px;
+        font-size: 0.8rem;
+    }
+
+    .start-button {
+        padding: 6px 16px;
+        font-size: 0.9rem;
+        min-height: 32px;
+    }
+
+    /* Adjust store for very small screens */
+    .store-modal {
+        max-height: 85vh;
+    }
+
+    .store-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+    }
+}
+

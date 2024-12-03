@@ -462,6 +462,36 @@ class Game {
         // Load saved theme
         this.currentTheme = localStorage.getItem('currentTheme') || 'default-theme';
         this.applyTheme(this.currentTheme);
+        
+        // Touch control properties
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.isTouching = false;
+        this.swipeThreshold = 50; // minimum distance for swipe
+        
+        // Add touch controls setup
+        this.setupTouchControls();
+
+        // Add these to existing properties
+        this.backgroundMusic = document.getElementById('backgroundMusic');
+        this.musicEnabled = localStorage.getItem('musicEnabled') !== 'false';
+        this.setupAudioControls();
+        
+        // Initialize music state
+        if (this.musicEnabled) {
+            this.playBackgroundMusic();
+        }
+
+        // Add these with the other audio properties
+        this.soundEffects = {
+            gameOver: new Audio('assets/game-over.wav'),
+            levelComplete: new Audio('assets/next-level.wav')
+        };
+        
+        // Set volumes
+        Object.values(this.soundEffects).forEach(sound => {
+            sound.volume = 0.3;
+        });
     }
 
     init() {
@@ -764,50 +794,53 @@ class Game {
     }
 
     setupControls() {
-        document.addEventListener('keydown', (e) => {
-            if (!this.isRunning) return;
-            
-            switch(e.key) {
-                case 'ArrowLeft':
-                case 'a':
-                    this.keys.left = true;
-                    break;
-                case 'ArrowRight':
-                case 'd':
-                    this.keys.right = true;
-                    break;
-                case 'ArrowUp':
-                case 'w':
-                case ' ':
-                    // Allow jumping anytime
-                    if (!this.characterAAtPortal) {
-                        this.characterA.jump();
-                    }
-                    if (!this.characterBAtPortal) {
-                        this.characterB.jump();
-                    }
-                    break;
-            }
-        });
+        // Only add keyboard controls if not on mobile
+        if (!('ontouchstart' in window)) {
+            document.addEventListener('keydown', (e) => {
+                if (!this.isRunning) return;
+                
+                switch(e.key) {
+                    case 'ArrowLeft':
+                    case 'a':
+                        this.keys.left = true;
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                        this.keys.right = true;
+                        break;
+                    case 'ArrowUp':
+                    case 'w':
+                    case ' ':
+                        // Allow jumping anytime
+                        if (!this.characterAAtPortal) {
+                            this.characterA.jump();
+                        }
+                        if (!this.characterBAtPortal) {
+                            this.characterB.jump();
+                        }
+                        break;
+                }
+            });
 
-        document.addEventListener('keyup', (e) => {
-            switch(e.key) {
-                case 'ArrowLeft':
-                case 'a':
-                    this.keys.left = false;
-                    break;
-                case 'ArrowRight':
-                case 'd':
-                    this.keys.right = false;
-                    break;
-                case 'ArrowUp':
-                case 'w':
-                    this.characterA.stopFlying();
-                    this.characterB.stopFlying();
-                    break;
-            }
-        });
-
+            document.addEventListener('keyup', (e) => {
+                switch(e.key) {
+                    case 'ArrowLeft':
+                    case 'a':
+                        this.keys.left = false;
+                        break;
+                    case 'ArrowRight':
+                    case 'd':
+                        this.keys.right = false;
+                        break;
+                    case 'ArrowUp':
+                    case 'w':
+                        this.characterA.stopFlying();
+                        this.characterB.stopFlying();
+                        break;
+                }
+            });
+        }
+        
         // Button controls
         const pauseButton = document.getElementById('pauseButton');
         pauseButton.addEventListener('click', () => {
@@ -1168,6 +1201,20 @@ class Game {
 
     handleDeath() {
         this.pause();
+        
+        // Play game over sound
+        if (this.musicEnabled) {
+            // Fade out background music first
+            this.fadeOutMusic();
+            
+            // Play game over sound after a short delay
+            setTimeout(() => {
+                this.soundEffects.gameOver.play().catch(error => {
+                    console.log('Audio playback failed:', error);
+                });
+            }, 300);
+        }
+        
         this.showGameOver();
     }
 
@@ -1198,6 +1245,13 @@ class Game {
     handleLevelComplete() {
         if (this.characterAAtPortal && this.characterBAtPortal) {
             this.pause();
+            
+            // Play level complete sound
+            if (this.musicEnabled) {
+                this.soundEffects.levelComplete.play().catch(error => {
+                    console.log('Audio playback failed:', error);
+                });
+            }
             
             // Update level number and stats
             document.getElementById('completedLevel').textContent = this.currentLevel;
@@ -1701,6 +1755,165 @@ class Game {
             char.style.background = `linear-gradient(45deg, ${theme.primary}, ${theme.secondary})`;
             char.style.boxShadow = `0 0 15px ${theme.glow}`;
         });
+    }
+
+    // Add this method to Game class
+    setupTouchControls() {
+        const gameScreen = document.querySelector('.game-screen');
+        
+        // Touch start
+        gameScreen.addEventListener('touchstart', (e) => {
+            if (!this.isRunning) return;
+            
+            this.isTouching = true;
+            this.touchStartX = e.touches[0].clientX;
+            this.touchStartY = e.touches[0].clientY;
+            
+            // Simple tap for jump
+            if (!this.characterAAtPortal) {
+                this.characterA.jump();
+            }
+            if (!this.characterBAtPortal) {
+                this.characterB.jump();
+            }
+        });
+        
+        // Touch move (for swipe controls)
+        gameScreen.addEventListener('touchmove', (e) => {
+            if (!this.isRunning || !this.isTouching) return;
+            
+            e.preventDefault(); // Prevent screen scrolling
+            
+            const touchX = e.touches[0].clientX;
+            const touchY = e.touches[0].clientY;
+            
+            const deltaX = touchX - this.touchStartX;
+            
+            // Horizontal swipe for movement
+            if (Math.abs(deltaX) > this.swipeThreshold) {
+                if (deltaX > 0) {
+                    // Swipe right
+                    this.keys.right = true;
+                    this.keys.left = false;
+                } else {
+                    // Swipe left
+                    this.keys.left = true;
+                    this.keys.right = false;
+                }
+            }
+        }, { passive: false });
+        
+        // Touch end
+        gameScreen.addEventListener('touchend', () => {
+            this.isTouching = false;
+            // Stop movement
+            this.keys.left = false;
+            this.keys.right = false;
+            // Stop flying/continuous jump
+            this.characterA.stopFlying();
+            this.characterB.stopFlying();
+        });
+        
+        // Touch cancel
+        gameScreen.addEventListener('touchcancel', () => {
+            this.isTouching = false;
+            // Stop all movement
+            this.keys.left = false;
+            this.keys.right = false;
+            this.characterA.stopFlying();
+            this.characterB.stopFlying();
+        });
+    }
+
+    setupAudioControls() {
+        const toggleButton = document.getElementById('toggleMusic');
+        const musicOn = toggleButton.querySelector('.music-on');
+        const musicOff = toggleButton.querySelector('.music-off');
+
+        // Set initial state
+        if (!this.musicEnabled) {
+            musicOn.style.display = 'none';
+            musicOff.style.display = 'block';
+            
+            // Mute all sound effects
+            Object.values(this.soundEffects).forEach(sound => {
+                sound.volume = 0;
+            });
+        }
+
+        toggleButton.addEventListener('click', () => {
+            this.musicEnabled = !this.musicEnabled;
+            localStorage.setItem('musicEnabled', this.musicEnabled);
+
+            if (this.musicEnabled) {
+                this.playBackgroundMusic();
+                musicOn.style.display = 'block';
+                musicOff.style.display = 'none';
+                
+                // Restore sound effect volumes
+                Object.values(this.soundEffects).forEach(sound => {
+                    sound.volume = 0.3;
+                });
+            } else {
+                this.stopBackgroundMusic();
+                musicOn.style.display = 'none';
+                musicOff.style.display = 'block';
+                
+                // Mute sound effects
+                Object.values(this.soundEffects).forEach(sound => {
+                    sound.volume = 0;
+                });
+            }
+        });
+    }
+
+    playBackgroundMusic() {
+        if (this.musicEnabled) {
+            // Set volume to a pleasant level
+            this.backgroundMusic.volume = 0.4;
+            
+            // Play the music
+            this.backgroundMusic.play().catch(error => {
+                console.log('Audio playback failed:', error);
+            });
+        }
+    }
+
+    stopBackgroundMusic() {
+        this.backgroundMusic.pause();
+        this.backgroundMusic.currentTime = 0;
+    }
+
+    // Update the existing startGame method
+    startGame() {
+        // Existing start game code...
+        
+        if (this.musicEnabled) {
+            this.playBackgroundMusic();
+        }
+    }
+
+    // Update the existing gameOver method
+    gameOver() {
+        // Existing game over code...
+        
+        // Fade out music
+        if (this.musicEnabled) {
+            this.fadeOutMusic();
+        }
+    }
+
+    fadeOutMusic() {
+        if (!this.backgroundMusic) return;
+        
+        const fadeInterval = setInterval(() => {
+            if (this.backgroundMusic.volume > 0.1) {
+                this.backgroundMusic.volume -= 0.1;
+            } else {
+                clearInterval(fadeInterval);
+                this.stopBackgroundMusic();
+            }
+        }, 100);
     }
 }
 
